@@ -5,10 +5,12 @@ open states
 // 	no request.propagated_to
 // }
 
-pred propagate[r : request, t : thread_id]{
-	no (t  & r.propagated_to)
-	propagated_to' = propagated_to + (r -> t)
-	all s : system_state | s.seen' = s.seen
+pred propagate{
+	some r : request, t : set thread_id{
+	  no (t  & r.propagated_to)
+	  propagated_to' = propagated_to + (r -> t)
+	  all s : system_state | s.seen' = s.seen
+	}
 }
 
 //pred accept_request[r : request]
@@ -19,7 +21,7 @@ pred trivial_transition{
 }
 
 pred step {
-	(some r : request, t : thread_id | propagate[r,t] )
+	propagate
 }
 
 fact transitions {
@@ -32,7 +34,5 @@ assert propagate_monotone {
 check propagate_monotone for 4 but 6 steps
 
 run {} for 4 but  2..5 steps
-run propagate for 4 but 3 steps
-run {#propagated_to = 1; #propagated_to = 2} for 4 but exactly 2 steps
+run {#propagated_to = 1; #propagated_to = 4} for 4 but exactly 2 steps
 run some_not_fully_propagated for 4 but 5 steps
-run {some t : thread_id, r : request | t in r.propagated_to} for 4 but 5 steps
