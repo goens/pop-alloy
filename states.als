@@ -5,7 +5,7 @@ sig thread_id {}
 
 sig request {
 	order_constraints : set request,
-	propagated_to : set thread_id,
+	var propagated_to : set thread_id,
   }
 
 fun order_constraints_po[request_set : set request] : request_set -> request_set {
@@ -13,9 +13,9 @@ fun order_constraints_po[request_set : set request] : request_set -> request_set
 }
 
 sig system_state {
-	seen : set request,
+	var seen : set request,
 } {
-	partial_order[seen, order_constraints_po[seen]]
+	always partial_order[seen, order_constraints_po[seen]]
 }
 //  -------- Constraints on signatures -----------------------------
 
@@ -23,7 +23,8 @@ fact order_constraints_minimal {
 	all r : request | #(r.~order_constraints) <= 1
    irreflexive[order_constraints]
 }
-fact all_requests_seen_somewhere { all r : request | one s : system_state | r in s.seen}
+
+fact all_requests_seen_somewhere { all r : request | eventually r in system_state.seen}
 
 //   ------- Auxiliary definitions for storage subsystem ----------
 
