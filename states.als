@@ -1,15 +1,27 @@
 module states
 open util
 
-sig thread_id {}
+sig thread_id {
+	var read_response : set read
+}
 
-sig request {
+abstract sig request {
+	//TODO: might need to make order_constraints var
+	//(see propagate request to another thread, Action 2)
 	order_constraints : set request,
 	var propagated_to : set thread_id,
   }
 
-fun order_constraints_po[request_set : set request] : request_set -> request_set {
-	refl_transitive_closure[id[request_set].order_constraints]
+sig address {}
+
+sig write extends request { to : one address }
+sig read extends request { from : one address, var reads_from : lone write}
+sig barrier extends request {}
+//sig read_response extends request {}
+// sig exclusive_write extends request {}
+
+fun order_constraints_po : request -> request {
+	refl_transitive_closure[id[request].order_constraints]
 }
 
 sig system_state {
@@ -18,7 +30,7 @@ sig system_state {
 //  -------- Constraints on signatures -----------------------------
 
 fact order_constraints_induce_po {
-	partial_order[request, order_constraints_po[request]]
+	partial_order[request, order_constraints_po]
 }
 
 fact order_constraints_minimal {
@@ -36,9 +48,13 @@ fact one_system_state {always #system_state = 1}
 
 pred fully_propagated[r : request]{
 	// for all requests before r in the (reflexive-transitive closure of) order-constraints order:
- 	all req : r.(order_constraints_po[system_state.seen])
+ 	all req : r.(order_constraints_po)
 	// the request has been propagated to all threads (the set thread_id represents is all threads)
 	| req.propagated_to = thread_id
+}
+
+fun addr[r : request] : address {
+	r.(to + from)
 }
 
 //   ------- Sanity Check -----------
