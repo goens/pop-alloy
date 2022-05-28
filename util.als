@@ -1,6 +1,7 @@
 module util
 
 fun restriction[u : univ, rel: u->u] : u->u { u <: iden :> u}
+fun id[u : univ] : u->u { restriction[u, iden] }
 pred transitive[u : univ, rel: u->u] { rel = ^rel }
 pred reflexive[u : univ, rel: u->u] { restriction[u,iden] in rel }
 pred antisymmetric[u : univ, rel: u->u] { rel & ~rel = restriction[u,iden]}
