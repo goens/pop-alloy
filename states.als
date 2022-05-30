@@ -15,6 +15,7 @@ abstract sig request {
 sig address {}
 
 sig write extends request { to : one address }
+// TODO: sig write_exclusive extends write { }
 sig read extends request { from : one address, var reads_from : lone write}
 sig barrier extends request {}
 //sig read_response extends request {}

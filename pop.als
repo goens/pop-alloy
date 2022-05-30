@@ -46,13 +46,17 @@ pred respond_read[r : read, w : write, t: thread_id]{
 	r.propagated_to = w.propagated_to // propagated to exact same threads
    w in r.order_constraints_po // w before r
 	// requests order_constraints_po-between w and r is fully prop and to a diff. addr.
-	all req : (r.order_constraints_po - w.order_constraints_po) |
+	all req : (r.order_constraints_po - w.order_constraints_po - r) |
 		fully_propagated[req] and addr[req] != r.from
 
 
 	// actions
    read_response' = read_response + (t -> r)
 	reads_from' = reads_from + (r -> w)
+
+	//rest unchanged
+	seen' = seen
+	propagated_to' = propagated_to
 }
 
 pred trivial_transition{
