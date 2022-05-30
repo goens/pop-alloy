@@ -11,14 +11,15 @@ abstract sig request {
 	order_constraints : set request,
 	var propagated_to : set thread_id,
   }
+abstract sig memory_access extends request {}
 
 sig address {}
 
-sig write extends request { to : one address }
+sig write extends memory_access { to : one address }
 // TODO: sig write_exclusive extends write { }
-sig read extends request { from : one address, var reads_from : lone write}
+sig read extends memory_access { from : one address, var reads_from : lone write}
 sig barrier extends request {}
-//sig read_response extends request {}
+sig dmb_sy extends barrier {}
 // sig exclusive_write extends request {}
 
 fun order_constraints_po : request -> request {
@@ -27,7 +28,10 @@ fun order_constraints_po : request -> request {
 
 sig system_state {
 	var seen : set request,
+	//var removed : set request
 }
+
+//fun active[s : system_state] : set request { s.seen - s.removed }
 //  -------- Constraints on signatures -----------------------------
 
 fact order_constraints_induce_po {

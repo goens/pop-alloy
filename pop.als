@@ -1,11 +1,18 @@
 module pop
 open states
 
+pred reorder_condition[r_old : request, r_new : request]{
+  r_old not in dmb_sy
+  r_new not in dmb_sy
+  (r_old + r_new) in (memory_access - thread_id.read_response) => r_old.addr != r_new.addr
+}
+
 pred init{
 	no request.propagated_to
 	no system_state.seen
 	no read_response
 	no reads_from
+	//no system_state.removed
 }
 
 pred propagate[r : request, t : thread_id]{
@@ -22,6 +29,7 @@ pred propagate[r : request, t : thread_id]{
 	seen' = seen
 	read_response' = read_response
 	reads_from' = reads_from
+	//removed' = removed
 }
 
 pred accept_request[r : request, t : thread_id]{
@@ -35,6 +43,7 @@ pred accept_request[r : request, t : thread_id]{
 	//rest unchanged
 	read_response' = read_response
 	reads_from' = reads_from
+	//removed' = removed
 }
 
 pred respond_read[r : read, w : write, t: thread_id]{
@@ -49,21 +58,23 @@ pred respond_read[r : read, w : write, t: thread_id]{
 	all req : (r.order_constraints_po - w.order_constraints_po - r) |
 		fully_propagated[req] and addr[req] != r.from
 
-
 	// actions
    read_response' = read_response + (t -> r)
 	reads_from' = reads_from + (r -> w)
+	//system_state.removed' = system_state.removed + r
 
 	//rest unchanged
 	seen' = seen
 	propagated_to' = propagated_to
 }
 
+
 pred trivial_transition{
 	propagated_to' = propagated_to
 	seen' = seen
 	read_response' = read_response
 	reads_from' = reads_from
+	//removed' = removed
 }
 
 pred propagate_step {some r : request, t : thread_id | propagate[r,t]}
@@ -106,4 +117,4 @@ pred some_accept_req {eventually (some r : request, t : thread_id | accept_reque
 run {#read = 1 and #write = 1 and #thread_id = 2} for 4..10 steps
 run {#request = 2 and eventually finished_execution } for 4 but 5..10 steps
 run {#propagated_to = 0 until #propagated_to = 1 until #propagated_to = 4} for 4 but 10 steps
-run {eventually respond_read_step} for 5..10 steps
+run {eventually (some r : request, s : request | reorder_condition[r,s])} for 5..10 steps
