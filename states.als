@@ -6,10 +6,9 @@ sig thread_id {
 }
 
 abstract sig request {
-	//TODO: might need to make order_constraints var
-	//(see propagate request to another thread, Action 2)
-	order_constraints : set request,
+	var order_constraints : set request,
 	var propagated_to : set thread_id,
+	thread : one thread_id
   }
 abstract sig memory_access extends request {}
 
@@ -22,8 +21,10 @@ sig barrier extends request {}
 sig dmb_sy extends barrier {}
 // sig exclusive_write extends request {}
 
+fun active_requests : set request { system_state.seen } // { system_state.seen - system_state.removed }
+
 fun order_constraints_po : request -> request {
-	refl_transitive_closure[id[request].order_constraints]
+	refl_transitive_closure[id[active_requests] + order_constraints]
 }
 
 sig system_state {
@@ -31,18 +32,18 @@ sig system_state {
 	//var removed : set request
 }
 
-//fun active[s : system_state] : set request { s.seen - s.removed }
 //  -------- Constraints on signatures -----------------------------
 
-fact order_constraints_induce_po {
-	partial_order[request, order_constraints_po]
+pred order_constraints_induce_po {
+	partial_order[active_requests, order_constraints_po]
 }
 
-fact order_constraints_minimal {
-	// request have at most one predecessor in order-constraints
-	all r : request | #(r.~order_constraints) <= 1
-   irreflexive[order_constraints]
-}
+// pred order_constraints_minimal {
+// 	// request have at most one predecessor in order-constraints
+// 	all r : active_requests | #(r.~order_constraints) <= 1
+//    irreflexive[order_constraints]
+// }
+
 
 fact all_requests_seen_somewhere { all r : request | eventually r in system_state.seen}
 
