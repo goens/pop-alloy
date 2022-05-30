@@ -47,7 +47,7 @@ pred init{
 	no read_response
 	no reads_from
 	no request.order_constraints
-	//no system_state.removed
+	no system_state.removed
 }
 
 pred propagate[r : request, t : thread_id]{
@@ -65,7 +65,7 @@ pred propagate[r : request, t : thread_id]{
 	seen' = seen
 	read_response' = read_response
 	reads_from' = reads_from
-	//removed' = removed
+	removed' = removed
 }
 
 pred accept_request[r : request]{
@@ -80,7 +80,7 @@ pred accept_request[r : request]{
 	//rest unchanged
 	read_response' = read_response
 	reads_from' = reads_from
-	//removed' = removed
+	removed' = removed
 }
 
 pred respond_read[r : read, w : write, t: thread_id]{
@@ -98,7 +98,7 @@ pred respond_read[r : read, w : write, t: thread_id]{
 	// actions
    read_response' = read_response + (t -> r)
 	reads_from' = reads_from + (r -> w)
-	//system_state.removed' = system_state.removed + r
+	system_state.removed' = system_state.removed + r
 
 	//rest unchanged
 	seen' = seen
@@ -113,7 +113,7 @@ pred trivial_transition{
 	read_response' = read_response
 	reads_from' = reads_from
 	order_constraints' = order_constraints
-	//removed' = removed
+	removed' = removed
 }
 
 pred propagate_step {some r : request, t : thread_id | propagate[r,t]}

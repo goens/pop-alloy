@@ -21,7 +21,7 @@ sig barrier extends request {}
 sig dmb_sy extends barrier {}
 // sig exclusive_write extends request {}
 
-fun active_requests : set request { system_state.seen } // { system_state.seen - system_state.removed }
+fun active_requests : set request { system_state.seen - system_state.removed }
 
 fun order_constraints_po : request -> request {
 	refl_transitive_closure[id[active_requests] + order_constraints]
@@ -29,7 +29,7 @@ fun order_constraints_po : request -> request {
 
 sig system_state {
 	var seen : set request,
-	//var removed : set request
+	var removed : set request
 }
 
 //  -------- Constraints on signatures -----------------------------
