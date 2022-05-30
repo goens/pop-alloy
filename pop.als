@@ -40,6 +40,11 @@ pred accept_request_order_constraints[r : request]{
 			r_new in r.order_constraints'
 }
 
+pred po[r : request, s : request]{
+	r.thread = s.thread
+   (s not in system_state.seen) until (r in system_state.seen)
+}
+
 // ----------------- Execution ---------------------
 pred init{
 	no request.propagated_to
@@ -150,9 +155,17 @@ assert propagate_monotone {
 }
 assert order_constraints_always_induce_po {always order_constraints_induce_po}
 
+assert one_request_at_a_time {
+	all r : request, s : request |
+		(r in (system_state.seen' - system_state.seen)) and
+   	(s in (system_state.seen' - system_state.seen)) =>
+			r = s
+}
+
 check propagate_monotone for 4 but 10 steps
 check accept_request_always_empty_propagated_list for 4 but 10 steps
 check order_constraints_always_induce_po for 4 but 10 steps
+check one_request_at_a_time for 4 but 10 steps
 
 //pred some_accept_req {eventually (some r : request, t : thread_id | accept_request[r,t])}
 
