@@ -1,5 +1,7 @@
 module pop
-open arm
+//open arm
+//open ptx
+open tso
 
 // -------- Auxiliary definitions -----------------
 
@@ -56,6 +58,7 @@ pred propagate[r : request, t : thread_id]{
    r in system_state.seen // request has been seen
    // every request that is before r in order_constraints has already been propagated to thread t
    all prev_req : (r.order_constraints_po - r) |  t in prev_req.propagated_to
+	propagate_condition[r,t]
 
    // changes
    propagated_to' = propagated_to + (r -> t)
@@ -98,7 +101,7 @@ pred respond_read[r : read, w : write, t: thread_id]{
    // actions
    read_response' = read_response + (t -> r)
    reads_from' = reads_from + (r -> w)
-   system_state.removed' = system_state.removed + r
+	remove_reads[r,system_state]
 
    //rest unchanged
    seen' = seen

@@ -6,6 +6,7 @@ open util
 
 sig thread_id {
    var read_response : set read
+	sco : one scope
 }
 
 abstract sig request {
@@ -32,6 +33,8 @@ sig system_state {
    var removed : set request
 }
 
+sig scope{ subscopes : set scope }
+
 //  -------- Constraints on signatures -----------------------------
 
 pred order_constraints_induce_po {
@@ -43,6 +46,11 @@ fact all_requests_seen_somewhere { all r : request | eventually r in system_stat
 fact only_seen_propagated { no (request - system_state.seen).propagated_to }
 
 fact one_system_state {always #system_state = 1}
+
+fact one_system_scope { one s : scope | s.subscopes = scope }
+fact subscopes_po { partial_order[scope,subscopes] }
+fact thread_scope_minimal { all s : thread_id.scope | s.subscope = s }
+
 //   ------- Auxiliary definitions for storage subsystem ----------
 
 pred fully_propagated[r : request]{

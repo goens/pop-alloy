@@ -25,7 +25,7 @@ pred MP {
 }
 
 
-run MP for exactly 6 request, exactly 2 address, exactly 2 thread_id, 1 system_state, 20 steps
+run MP for exactly 6 request, exactly 2 address, exactly 2 thread_id, 1 system_state, 1 scope, 20 steps
 
 pred MP_fence {
    #thread_id = 2
@@ -55,8 +55,8 @@ assert MP_fence_disallowed{
 		(po[r1,r2] and r1.reads_from = w2) => r2.reads_from = w1
 }
 
-run MP_fence for exactly 8 request, exactly 2 address, exactly 2 thread_id, 1 system_state, 20 steps
-check MP_fence_disallowed for exactly 8 request, exactly 2 address, exactly 2 thread_id, 1 system_state, 20 steps
+run MP_fence for exactly 8 request, exactly 2 address, exactly 2 thread_id, 1 system_state, 1 scope, 20 steps
+check MP_fence_disallowed for exactly 8 request, exactly 2 address, exactly 2 thread_id, 1 system_state, 1 scope, 20 steps
 
 pred IRIW {
    # pop/thread_id = 4
@@ -77,7 +77,7 @@ pred IRIW {
         //and eventually w1 in r1.reads_from and w2 in r1.reads_from
 }
 
-run IRIW for exactly 6 request, exactly 2 address, exactly 4 thread_id, 1 system_state, 30 steps
+run IRIW for exactly 6 request, exactly 2 address, exactly 4 thread_id, 1 system_state, 1 scope, 30 steps
 // pred IRIW_fences {
 //    # pop/thread_id = 4
 //    # pop/read = 4
