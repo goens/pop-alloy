@@ -1,7 +1,7 @@
 module pop
-//open arm
+open arm
 //open ptx
-open tso
+//open tso
 
 // -------- Auxiliary definitions -----------------
 
@@ -11,29 +11,36 @@ pred order_constraint_update_condition_accept_request[r_old : request, r_new : r
 }
 
 pred order_constraint_update_condition_propagate[r : request, r_new : request, t : thread_id] {
+	arch_propagate_condition[r, r_new, t]
    not reorder_condition[r, r_new]
-   //not already ordered
-   r_new not in r.order_constraints_po
-   r not in r_new.order_constraints_po
+	some s : scope | {
+		min_joint_scope[r.thread,r_new.thread,s]
+      r_new not in s.order_constraints_po.r
+      r not in s.order_constraints_po.r_new
+   }
    //propagated constraints
    t in r_new.propagated_to
    r.thread not in r_new.propagated_to
 }
 
+
+
 pred propagate_order_constraints[r : request, t : thread_id]{
-   all s : request - r | s.order_constraints' = s.order_constraints
+   all s : scope, r_new : request - r |
+ 		s.order_constraints.r_new' = s.order_constraints.r_new
    all r_new : request |
       order_constraint_update_condition_propagate[r,r_new,t]
-      or (r_new in r.order_constraints) <=>
-         r_new in r.order_constraints'
+	   or arch_order_constraints_update_propagate[r,r_new,t]
+	or all s : scope |
+		r_new in s.order_constraints.r <=> r_new in s.order_constraints.r'
 }
 
 pred accept_request_order_constraints[r : request]{
-   all s : request - r | s.order_constraints' = s.order_constraints
+   all s : scope, r_b : request - r | s.order_constraints.r_b' = s.order_constraints.r_b
    all r_new : request |
       order_constraint_update_condition_accept_request[r,r_new]
-      or (r_new in r.order_constraints) <=>
-         r_new in r.order_constraints'
+	or all s : scope |
+		r_new in s.order_constraints.r <=> r_new in s.order_constraints.r'
 }
 
 pred po[r : request, s : request]{
@@ -48,7 +55,7 @@ pred init{
    no system_state.seen
    no read_response
    no reads_from
-   no request.order_constraints
+   no system_scope.order_constraints.request
    no system_state.removed
 }
 
@@ -57,7 +64,10 @@ pred propagate[r : request, t : thread_id]{
    no (t  & r.propagated_to) // r -> t is new
    r in system_state.seen // request has been seen
    // every request that is before r in order_constraints has already been propagated to thread t
-   all prev_req : (r.order_constraints_po - r) |  t in prev_req.propagated_to
+   some s : scope| {
+      min_joint_scope[r.thread,t,s]
+		all prev_req : (s.order_constraints_po.r - r) |  t in prev_req.propagated_to
+		}
 	propagate_condition[r,t]
 
    // changes
@@ -92,11 +102,13 @@ pred respond_read[r : read, w : write, t: thread_id]{
    r in system_state.seen
    w in system_state.seen
    r.from = w.to // same address
+	some s : scope | {
    r.propagated_to = w.propagated_to // propagated to exact same threads
-   w in r.order_constraints_po // w before r
+   w in s.order_constraints_po.r // w before r
    // requests order_constraints_po-between w and r is fully prop and to a diff. addr.
-   all req : (r.order_constraints_po - w.order_constraints_po - r) |
-      fully_propagated[req] and addr[req] != r.from
+   all req : (s.order_constraints_po.r - s.order_constraints_po.w - r) |
+      fully_propagated[req,s] and addr[req] != r.from
+	}
 
    // actions
    read_response' = read_response + (t -> r)
@@ -137,7 +149,7 @@ fact transitions {
 
 pred finished_execution {
    system_state.seen = request
-   all r : request | fully_propagated[r]
+   all r : request | fully_propagated[r,system_scope]
    //all read requests have been responded to:
    read in thread_id.read_response
 }

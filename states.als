@@ -92,5 +92,4 @@ pred min_joint_scope[t1 : thread_id, t2 : thread_id, s : scope]{
 	all r : (s.subscopes - s) | not is_joint_scope[t1,t2,r]
 }
 
-
 run {} for 5
