@@ -44,7 +44,7 @@ fact order_constraints_respect_scope {
 	all s : scope | s.order_constraints.request.thread in scope.subscopes
 }
 
-fact order_constraints_respect_subscope {
+pred order_constraints_respect_subscope {
 	all s : scope |
 		s.order_constraints in s.subscopes.order_constraints
 }
@@ -91,5 +91,12 @@ pred min_joint_scope[t1 : thread_id, t2 : thread_id, s : scope]{
 	is_joint_scope[t1,t2,s]
 	all r : (s.subscopes - s) | not is_joint_scope[t1,t2,r]
 }
+
+pred po[r : request, s : request]{
+   r.thread = s.thread
+	r != s
+   (s not in system_state.seen) until (r in system_state.seen)
+}
+
 
 run {} for 5

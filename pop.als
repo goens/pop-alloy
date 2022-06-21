@@ -1,7 +1,8 @@
 module pop
-open arm
+//open arm
 //open ptx
 //open tso
+open compound
 
 // -------- Auxiliary definitions -----------------
 
@@ -41,12 +42,6 @@ pred accept_request_order_constraints[r : request]{
       order_constraint_update_condition_accept_request[r,r_new]
 	or all s : scope |
 		r_new in s.order_constraints.r <=> r_new in s.order_constraints.r'
-}
-
-pred po[r : request, s : request]{
-   r.thread = s.thread
-	r != s
-   (s not in system_state.seen) until (r in system_state.seen)
 }
 
 // ----------------- Execution ---------------------
@@ -171,9 +166,12 @@ assert one_request_at_a_time {
          r = s
 }
 
+
+assert order_constraints_subscope {order_constraints_respect_subscope}
 // ----------------- Checks ---------------------
 
 check propagate_monotone for 4 but 10 steps
+check order_constraints_subscope for 4 but 10 steps
 check accept_request_always_empty_propagated_list for 4 but 10 steps
 check order_constraints_always_induce_po for 4 but 10 steps
 check one_request_at_a_time for 4 but 10 steps
